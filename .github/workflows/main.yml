@@ -1,0 +1,43 @@
+name: Actualiza ACB en temporada
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Findes de temporada (sep-jun), hora UTC. Cada hora en la franja de partidos.
+    - cron: "0 16-23 * 9-12,1-6 6" # sábados
+    - cron: "0 10-23 * 9-12,1-6 0" # domingos
+
+permissions:
+  contents: write
+
+jobs:
+  actualiza:
+    runs-on: ubuntu-latest
+    env:
+      ACB_TOKEN: ${{ secrets.ACB_TOKEN }}
+      ACB_API: ${{ secrets.ACB_API }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::tidyverse
+            any::jsonlite
+            any::httr
+            any::hms
+
+      - name: Actualizar datos
+        run: Rscript main_acb_update.R
+
+      - name: Commit y push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data data_pbps data_pbp_clean data_boxscores data_stats_equipos
+          git diff --cached --quiet || git commit -m "Auto: actualiza ACB $(date -u +%Y-%m-%d)"
+          git push
