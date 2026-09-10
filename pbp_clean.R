@@ -165,27 +165,28 @@ quinteto_partido <- function(ev) {
   bind_cols(ev, map_df(estados[idx], as_tibble_row))
 }
 
-clean_temporada <- function(temporada) {
-  fichero <- paste0("data_pbp_clean/pbp_clean_acb_", temporada, ".csv")
-  if (file.exists(fichero)) {
-    return(invisible(NULL))
-  }
+# Genera el clean de una temporada a partir de data_pbps/ (siempre reescribe).
+limpia_temporada <- function(temporada) {
   read_csv(paste0("data_pbps/pbp_acb_", temporada, ".csv"), show_col_types = FALSE) %>%
     left_join(jornadas, by = "id_match") %>%
     enriquece() %>%
     group_split(id_match) %>%
     map_df(quinteto_partido) %>%
-    write.csv(fichero, row.names = FALSE)
+    write.csv(paste0("data_pbp_clean/pbp_clean_acb_", temporada, ".csv"), row.names = FALSE)
 }
 
-años <- list.files("data_pbps") %>%
-  str_extract("[0-9]{4}") %>%
-  as.integer() %>%
-  sort()
+# Backfill (a mano, una vez): todas las temporadas de data_pbps/, salta la ya hecha.
+backfill_pbp_clean <- function() {
+  anios <- list.files("data_pbps") %>%
+    str_extract("[0-9]{4}") %>%
+    as.integer() %>%
+    sort()
+  walk(anios, function(t) {
+    if (!file.exists(paste0("data_pbp_clean/pbp_clean_acb_", t, ".csv"))) {
+      limpia_temporada(t)
+    }
+  })
+}
 
-walk(años, clean_temporada)
-
-
-
-# pbp_clean <- list.files("data_pbp_clean", full.names = TRUE) %>%
-#   map_df(~ read_csv(., show_col_types = FALSE))
+# En temporada: regenera el clean del año en curso.
+limpia_temporada(temporada_actual())

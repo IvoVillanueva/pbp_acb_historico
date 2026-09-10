@@ -1,10 +1,8 @@
 source("setup.R")
 
-# Backfill play-by-play (desde 2016-17) -> data_pbps/pbp_acb_{año}.csv -
+if (!dir.exists("data_pbps")) dir.create("data_pbps")
 
-partidos <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
-  filter(edition_year >= 2016) %>%
-  select(edition_year, id)
+# Play-by-play, 3 competiciones desde 2016-17 -> data_pbps/pbp_acb_{año}.csv
 
 pbpdf <- function(id_m) {
   url <- paste0(acb_api, "PlayByPlay/matchevents?idMatch=", id_m, "&jvFilter=true")
@@ -26,39 +24,34 @@ pbpdf <- function(id_m) {
     )
 }
 
-pbp_temporada <- function(temporada) {
-  partidos %>%
-    filter(edition_year == temporada) %>%
-    pull(id) %>%
-    map_df(pbpdf) %>%
-    write.csv(paste0("data_pbps/pbp_acb_", temporada, ".csv"), row.names = FALSE)
+# Backfill (a mano, una vez): un fichero por temporada, salta el año ya hecho.
+backfill_pbp <- function() {
+  calendario <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
+    filter(edition_year >= 2016)
+  una_temporada <- function(temporada) {
+    fichero <- paste0("data_pbps/pbp_acb_", temporada, ".csv")
+    if (file.exists(fichero)) {
+      return(invisible(NULL))
+    }
+    calendario %>%
+      filter(edition_year == temporada) %>%
+      pull(id) %>%
+      map_df(pbpdf) %>%
+      write.csv(fichero, row.names = FALSE)
+  }
+  walk(sort(unique(calendario$edition_year)), una_temporada)
 }
 
-walk(unique(partidos$edition_year), pbp_temporada)
-
-
-# Completar cada pbp_acb_{año}.csv con los id_match de Copa y Supercopa -
-# Preserva lo ya bajado (Liga): solo añade los partidos de las
-# competiciones 2 y 3 que aún no están en el fichero.
-
-completa_copas <- function(temporada) {
+# En temporada: añade al fichero del año los partidos que aún no están.
+actualiza_pbp <- function(temporada) {
   fichero <- paste0("data_pbps/pbp_acb_", temporada, ".csv")
-  hecho <- read_csv(fichero, show_col_types = FALSE)
+  hecho <- if (file.exists(fichero)) read_csv(fichero, show_col_types = FALSE) else NULL
   read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
-    filter(
-      edition_year == temporada,
-      id_competition %in% c(2, 3),
-      !id %in% hecho$id_match
-    ) %>%
+    filter(edition_year == temporada, !id %in% hecho$id_match) %>%
     pull(id) %>%
     map_df(pbpdf) %>%
     bind_rows(hecho) %>%
     write.csv(fichero, row.names = FALSE)
 }
 
-walk(unique(partidos$edition_year), completa_copas)
-
-
-
-
-pbp_acb_2025 <- read_csv("data_pbps/pbp_acb_2025.csv")
+actualiza_pbp(temporada_actual())
