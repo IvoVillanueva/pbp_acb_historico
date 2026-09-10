@@ -3,8 +3,9 @@ name: Actualiza ACB en temporada
 on:
   workflow_dispatch:
   schedule:
-    # Temporada sep-jun (Supercopa a playoffs). Cada 3 h, todos los días.
-    - cron: "0 */3 * 9-12,1-6 *"
+    # Temporada sep-jun. Cada 10 min, todos los días: el script sale enseguida
+    # si hoy no hay partidos.
+    - cron: "*/10 * * 9-12,1-6 *"
 
 permissions:
   contents: write
