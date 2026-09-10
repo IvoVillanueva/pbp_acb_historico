@@ -3,9 +3,8 @@ name: Actualiza ACB en temporada
 on:
   workflow_dispatch:
   schedule:
-    # Findes de temporada (sep-jun), hora UTC. Cada hora en la franja de partidos.
-    - cron: "0 16-23 * 9-12,1-6 6" # sábados
-    - cron: "0 10-23 * 9-12,1-6 0" # domingos
+    # Temporada sep-jun (Supercopa a playoffs). Cada 3 h, todos los días.
+    - cron: "0 */3 * 9-12,1-6 *"
 
 permissions:
   contents: write
