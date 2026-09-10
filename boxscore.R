@@ -2,10 +2,7 @@ source("setup.R")
 
 if (!dir.exists("data_boxscores")) dir.create("data_boxscores")
 
-# Backfill boxscore: 3 competiciones desde 1983 -> data_boxscores/boxscore_acb_{año}.csv
-
-calendario <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
-  filter(edition_year >= 1983)
+# Boxscore de jugador, 3 competiciones desde 1983 -> data_boxscores/boxscore_acb_{año}.csv
 
 boxdf <- function(id_m) {
   url <- paste0(acb_api, "Boxscore/playermatchstatistics?idMatch=", id_m)
@@ -23,20 +20,38 @@ boxdf <- function(id_m) {
     select(where(~ !is.list(.)))
 }
 
-boxscore_temporada <- function(temporada) {
-  fichero <- paste0("data_boxscores/boxscore_acb_", temporada, ".csv")
-  if (file.exists(fichero)) {
-    return(invisible(NULL))
+# Backfill (a mano, una vez): un fichero por temporada, salta el año ya hecho.
+backfill_boxscore <- function() {
+  calendario <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
+    filter(edition_year >= 1983)
+  una_temporada <- function(temporada) {
+    fichero <- paste0("data_boxscores/boxscore_acb_", temporada, ".csv")
+    if (file.exists(fichero)) {
+      return(invisible(NULL))
+    }
+    calendario %>%
+      filter(edition_year == temporada) %>%
+      pull(id) %>%
+      map_df(boxdf) %>%
+      write.csv(fichero, row.names = FALSE)
   }
-  calendario %>%
-    filter(edition_year == temporada) %>%
+  walk(sort(unique(calendario$edition_year)), una_temporada)
+}
+
+# En temporada: añade al fichero del año los partidos que aún no están.
+actualiza_boxscore <- function(temporada) {
+  fichero <- paste0("data_boxscores/boxscore_acb_", temporada, ".csv")
+  hecho <- if (file.exists(fichero)) {
+    read_csv(fichero, show_col_types = FALSE, col_types = cols(pno = "c"))
+  } else {
+    NULL
+  }
+  read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
+    filter(edition_year == temporada, !id %in% hecho$id_match) %>%
     pull(id) %>%
     map_df(boxdf) %>%
+    bind_rows(hecho) %>%
     write.csv(fichero, row.names = FALSE)
 }
 
-walk(sort(unique(calendario$edition_year)), boxscore_temporada)
-
-# boxscore <- list.files("data_boxscores", full.names = TRUE) %>%
-#   map_df(~ read_csv(.x, show_col_types = FALSE, col_types = cols(pno = "c")))
-#
+actualiza_boxscore(temporada_actual())

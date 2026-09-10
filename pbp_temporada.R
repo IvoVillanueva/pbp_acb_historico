@@ -5,7 +5,7 @@ source("setup.R")
 # fichero de la temporada y los añade.
 
 calendario <- read_csv("data/calendario_historico.csv", show_col_types = FALSE)
-temporada <- max(calendario$edition_year)
+temporada <- temporada_actual()
 fichero <- paste0("data_pbps/pbp_acb_", temporada, ".csv")
 hecho <- if (file.exists(fichero)) read_csv(fichero, show_col_types = FALSE) else NULL
 
@@ -35,8 +35,3 @@ calendario %>%
   map_df(pbpdf) %>%
   bind_rows(hecho) %>%
   write.csv(fichero, row.names = FALSE)
-
-
-pbp_acb_2025 <- read_csv("data_pbps/pbp_acb_2025.csv")
-
-unique(pbp_acb_2025$id_phase)

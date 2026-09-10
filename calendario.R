@@ -54,10 +54,7 @@ backfill_calendario <- function() {
 # En temporada: refresca solo la edición en curso y fusiona por id
 # ================================================================
 
-edicion_actual <- function() {
-  hoy <- today()
-  (if (month(hoy) >= 9) year(hoy) else year(hoy) - 1) - 1935
-}
+edicion_actual <- function() temporada_actual() - 1935
 
 # jornadas nuevas de la edición (los cruces de playoff se publican sobre la marcha)
 actualiza_ids <- function(ed) {
