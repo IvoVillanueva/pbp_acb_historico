@@ -4,9 +4,11 @@ source("setup.R")
 # no hay partidos: así el cron puede correr cada 10 min todos los días sin gastar.
 source("scripts/06_horarios.R")
 
-if (read_csv("data/horarios.csv", show_col_types = FALSE) %>%
+hay_partido_hoy <- read_csv("data/horarios.csv", show_col_types = FALSE) %>%
   filter(as_date(cuando) == today()) %>%
-  nrow() == 0) {
+  nrow() > 0
+
+if (!hay_partido_hoy) {
   quit(save = "no")
 }
 
