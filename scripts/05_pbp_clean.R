@@ -166,8 +166,18 @@ quinteto_partido <- function(ev) {
 }
 
 # Genera el clean de una temporada a partir de data_pbps/ (siempre reescribe).
+# Si el pbp de esa temporada no existe o está vacío (arranque de temporada,
+# aún sin partidos finalizados), no hay nada que limpiar.
 limpia_temporada <- function(temporada) {
-  read_csv(paste0("data_pbps/pbp_acb_", temporada, ".csv"), show_col_types = FALSE) %>%
+  fichero <- paste0("data_pbps/pbp_acb_", temporada, ".csv")
+  if (!file.exists(fichero)) {
+    return(invisible(NULL))
+  }
+  pbp <- read_csv(fichero, show_col_types = FALSE)
+  if (nrow(pbp) == 0) {
+    return(invisible(NULL))
+  }
+  pbp %>%
     left_join(jornadas, by = "id_match") %>%
     enriquece() %>%
     group_split(id_match) %>%
