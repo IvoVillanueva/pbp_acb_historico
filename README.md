@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏀 PBP ACB Histórico
+### 🏀 PBP ACB Histórico
 
 <img src="https://www.acb.com/Documentos/Cabeceras/logo-competicion-1b.png" alt="Liga Endesa" width="260"/>
 
