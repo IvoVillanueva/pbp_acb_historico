@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🏀 PBP ACB Histórico
-<img src="https://es.wikipedia.org/wiki/Liga_ACB#/media/Archivo:Liga_Endesa_2019_logo.svg" alt="Liga Endesa" width="260"/>
+<img src="https://mediacenter.acb.com/filestore/aceb/system/config/linkedheaderimgsrc.jpg" alt="Liga Endesa" width="260"/>
 
 ### 📊 Histórico y actualización automática de partidos, play-by-play y boxscores de la ACB
 
