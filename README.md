@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏀 PBP ACB Histórico
+<h1 style="font-size: 4em;">🏀 PBP ACB Histórico</h1>
 <img src="https://mediacenter.acb.com/filestore/aceb/system/config/linkedheaderimgsrc.jpg" alt="Liga Endesa" width="260"/>
 
 ### 📊 Histórico y actualización automática de partidos, play-by-play y boxscores de la ACB
