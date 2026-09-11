@@ -1,8 +1,7 @@
 <div align="center">
 
 # 🏀 PBP ACB Histórico
-<span style="font-size: 75px;">🏀 PBP ACB Histórico</span>
-<img src="https://www.acb.com/Documentos/Cabeceras/logo-competicion-1b.png" alt="Liga Endesa" width="260"/>
+<img src="[https://www.acb.com/Documentos/Cabeceras/logo-competicion-1b.png](https://www.kromex.eu/ClientSite/wolfsport/Imagenes/articulos/KMX04388009.mini.png)" alt="Liga Endesa" width="260"/>
 
 ### 📊 Histórico y actualización automática de partidos, play-by-play y boxscores de la ACB
 
