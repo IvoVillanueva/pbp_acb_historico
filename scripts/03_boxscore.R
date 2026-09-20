@@ -17,7 +17,8 @@ boxdf <- function(id_m) {
       c(competition, edition, local_team, visitor_team, license),
       names_sep = "_"
     ) %>%
-    select(where(~ !is.list(.)))
+    select(where(~ !is.list(.))) %>%
+    mutate(license_id_type = as.numeric(license_id_type))
 }
 
 # Backfill (a mano, una vez): un fichero por temporada, salta el año ya hecho.
@@ -42,7 +43,7 @@ backfill_boxscore <- function() {
 actualiza_boxscore <- function(temporada) {
   fichero <- paste0("data_boxscores/boxscore_acb_", temporada, ".csv")
   hecho <- if (file.exists(fichero)) {
-    read_csv(fichero, show_col_types = FALSE, col_types = cols(pno = "c"))
+    read_csv(fichero, show_col_types = FALSE, col_types = cols(pno = "c", license_id_type = "d"))
   } else {
     NULL
   }
