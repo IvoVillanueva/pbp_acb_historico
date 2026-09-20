@@ -20,7 +20,8 @@ pbpdf <- function(id_m) {
     select(!c(id_subphase, id_round, license_media, team_media, contains("_date"))) %>%
     mutate(
       license_id_type = as.numeric(license_id_type),
-      crono = hms::as_hms(crono)
+      crono = hms::as_hms(crono),
+      shirt_number = as.character(shirt_number)
     )
 }
 
@@ -45,7 +46,11 @@ backfill_pbp <- function() {
 # En temporada: añade al fichero del año los partidos que aún no están.
 actualiza_pbp <- function(temporada) {
   fichero <- paste0("data_pbps/pbp_acb_", temporada, ".csv")
-  hecho <- if (file.exists(fichero)) read_csv(fichero, show_col_types = FALSE) else NULL
+  hecho <- if (file.exists(fichero)) {
+    read_csv(fichero, show_col_types = FALSE, col_types = cols(shirt_number = "c"))
+  } else {
+    NULL
+  }
   read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
     filter(edition_year == temporada, !id %in% hecho$id_match) %>%
     pull(id) %>%
