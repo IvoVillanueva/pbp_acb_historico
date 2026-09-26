@@ -3,9 +3,10 @@ name: Actualiza ACB en temporada
 on:
   workflow_dispatch:
   schedule:
-    # Temporada sep-jun. Cada 10 min, todos los días: el script sale enseguida
-    # si hoy no hay partidos.
-    - cron: "*/10 * * 9-12,1-6 *"
+    # Temporada sep-jun. Una vez por hora, todos los días: el script sale
+    # enseguida si hoy no hay partidos. Cada 10 min era demasiado frecuente
+    # y GitHub dejaba de disparar la mayoría de los ticks.
+    - cron: "0 * * 9-12,1-6 *"
 
 permissions:
   contents: write
