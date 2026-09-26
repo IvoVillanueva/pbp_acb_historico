@@ -39,7 +39,9 @@ backfill_boxscore <- function() {
   walk(sort(unique(calendario$edition_year)), una_temporada)
 }
 
-# En temporada: añade al fichero del año los partidos que aún no están.
+# En temporada: añade los partidos finalizados que aún no están, y
+# sobrescribe los de hoy que sigan en juego (la API los va actualizando en
+# directo; al finalizar, la siguiente pasada ya los coge por el otro lado).
 actualiza_boxscore <- function(temporada) {
   fichero <- paste0("data_boxscores/boxscore_acb_", temporada, ".csv")
   hecho <- if (file.exists(fichero)) {
@@ -47,11 +49,22 @@ actualiza_boxscore <- function(temporada) {
   } else {
     NULL
   }
-  read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
+
+  finalizados <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
     filter(edition_year == temporada, !id %in% hecho$id_match) %>%
-    pull(id) %>%
-    map_df(boxdf) %>%
-    bind_rows(hecho) %>%
+    pull(id)
+
+  en_juego <- read_csv("data/horarios.csv", show_col_types = FALSE) %>%
+    filter(as_date(cuando) == today(), !finalized) %>%
+    pull(id)
+
+  ids <- union(finalizados, en_juego)
+  if (length(ids) == 0) {
+    return(invisible(NULL))
+  }
+  if (!is.null(hecho)) hecho <- filter(hecho, !id_match %in% ids)
+
+  bind_rows(hecho, map_df(ids, boxdf)) %>%
     write.csv(fichero, row.names = FALSE)
 }
 
