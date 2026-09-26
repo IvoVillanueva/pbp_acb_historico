@@ -27,7 +27,7 @@ una_jornada <- function(id_competition, id_matchweek) {
       local = local_team_team_abbrev_name,
       visitante = visitor_team_team_abbrev_name,
       finalized,
-      cuando = as_datetime(date) + seconds(time)
+      cuando = with_tz(as_datetime(date) + seconds(time), "Europe/Madrid")
     )
 }
 
