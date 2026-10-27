@@ -38,15 +38,21 @@ backfill_stats_equipos <- function() {
   walk(sort(unique(calendario$edition_year)), una_temporada)
 }
 
-# En temporada: añade los partidos finalizados que aún no están, y
-# sobrescribe los de hoy que sigan en juego (la API los va actualizando en
-# directo; al finalizar, la siguiente pasada ya los coge por el otro lado).
+# En temporada: sobrescribe los de hoy que sigan en juego (la API los va
+# actualizando en directo) y vuelve a pedir los finalizados que falten o cuyos
+# puntos no sumen el resultado del calendario (se guardaron a medias).
 actualiza_stats_equipos <- function(temporada) {
   fichero <- paste0("data_stats_equipos/stats_equipos_acb_", temporada, ".csv")
-  hecho <- if (file.exists(fichero)) read_csv(fichero, show_col_types = FALSE) else NULL
+  hecho <- if (file.exists(fichero)) {
+    read_csv(fichero, show_col_types = FALSE)
+  } else {
+    tibble(id_match = numeric(), points = numeric())
+  }
 
   finalizados <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
-    filter(edition_year == temporada, !id %in% hecho$id_match) %>%
+    filter(edition_year == temporada) %>%
+    left_join(count(hecho, id_match, wt = points), by = c(id = "id_match")) %>%
+    filter(is.na(n) | n != score_local + score_visitor) %>%
     pull(id)
 
   en_juego <- read_csv("data/horarios.csv", show_col_types = FALSE) %>%
@@ -57,9 +63,7 @@ actualiza_stats_equipos <- function(temporada) {
   if (length(ids) == 0) {
     return(invisible(NULL))
   }
-  if (!is.null(hecho)) hecho <- filter(hecho, !id_match %in% ids)
-
-  bind_rows(hecho, map_df(ids, statsdf)) %>%
+  bind_rows(filter(hecho, !id_match %in% ids), map_df(ids, statsdf)) %>%
     write.csv(fichero, row.names = FALSE)
 }
 

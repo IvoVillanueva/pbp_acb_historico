@@ -1,18 +1,20 @@
 source("setup.R")
 
-# Refresca horarios (por si sale el calendario de Copa/Supercopa) y sale si hoy
-# no hay partidos: así el cron puede correr cada 10 min todos los días sin gastar.
+# Refresca horarios (por si sale el calendario de Copa/Supercopa) y sale si
+# ningún partido empezó en las últimas 24 horas: así el cron puede correr cada
+# hora sin gastar, y un partido que acaba pasada la medianoche (en UTC, la hora
+# del runner) aún tiene su pasada final. A mano (workflow_dispatch) corre siempre.
 source("scripts/06_horarios.R")
 
-hay_partido_hoy <- read_csv("data/horarios.csv", show_col_types = FALSE) %>%
-  filter(as_date(cuando) == today()) %>%
+hay_partido_reciente <- read_csv("data/horarios.csv", show_col_types = FALSE) %>%
+  filter(between(cuando, now() - hours(24), now())) %>%
   nrow() > 0
 
-if (!hay_partido_hoy) {
+if (!hay_partido_reciente && Sys.getenv("GITHUB_EVENT_NAME") != "workflow_dispatch") {
   quit(save = "no")
 }
 
-# Hay partidos hoy: cada script corre su parte incremental (los backfill_*() no).
+# Cada script corre su parte incremental (los backfill_*() no).
 source("scripts/01_calendario.R")
 source("scripts/02_pbp.R")
 source("scripts/03_boxscore.R")
