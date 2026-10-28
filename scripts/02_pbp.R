@@ -43,19 +43,27 @@ backfill_pbp <- function() {
   walk(sort(unique(calendario$edition_year)), una_temporada)
 }
 
-# En temporada: añade los partidos finalizados que aún no están, y
-# sobrescribe los de hoy que sigan en juego (la API los va actualizando en
-# directo; al finalizar, la siguiente pasada ya los coge por el otro lado).
+# En temporada: sobrescribe los de hoy que sigan en juego (la API los va
+# actualizando en directo) y vuelve a pedir los finalizados que falten o cuyo
+# marcador final no coincida con el del calendario (se guardaron a medias).
 actualiza_pbp <- function(temporada) {
   fichero <- paste0("data_pbps/pbp_acb_", temporada, ".csv")
   hecho <- if (file.exists(fichero)) {
     read_csv(fichero, show_col_types = FALSE, col_types = cols(shirt_number = "c"))
   } else {
-    NULL
+    tibble(id_match = numeric(), score_local = numeric(), score_visitor = numeric())
   }
 
   finalizados <- read_csv("data/calendario_historico.csv", show_col_types = FALSE) %>%
-    filter(edition_year == temporada, !id %in% hecho$id_match) %>%
+    filter(edition_year == temporada) %>%
+    left_join(
+      summarise(hecho, across(c(score_local, score_visitor), max), .by = id_match),
+      by = c(id = "id_match"),
+      suffix = c("", "_pbp")
+    ) %>%
+    filter(
+      is.na(score_local_pbp) | score_local_pbp != score_local | score_visitor_pbp != score_visitor
+    ) %>%
     pull(id)
 
   en_juego <- read_csv("data/horarios.csv", show_col_types = FALSE) %>%
@@ -66,9 +74,7 @@ actualiza_pbp <- function(temporada) {
   if (length(ids) == 0) {
     return(invisible(NULL))
   }
-  if (!is.null(hecho)) hecho <- filter(hecho, !id_match %in% ids)
-
-  bind_rows(hecho, map_df(ids, pbpdf)) %>%
+  bind_rows(filter(hecho, !id_match %in% ids), map_df(ids, pbpdf)) %>%
     write.csv(fichero, row.names = FALSE)
 }
 
